@@ -1,6 +1,6 @@
 #include <SPI.h>
 
-#define TACT 167
+#define TACT 1670
 #define DOT_TACTS 3
 #define DIGIT_TACTS 6
 #define DOT_MASK 0x80
@@ -35,24 +35,28 @@ uint8_t digit = 0;
 sample_t sample;
 
 void setup() {
+  pinMode(LED_BUILTIN,OUTPUT);
+  digitalWrite(LED_BUILTIN,LOW);
   SPI.begin();
 }
 
 void loop() {
-  tick += millis();
+  tick = millis();
   if (dot_tact >= DOT_TACTS) {
     sample.bits.dot = !sample.bits.dot;
     dot_tact = 0;
   }
   if (digit_tact >= DIGIT_TACTS) {
+        digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
     if(++digit > 9) digit = 0;
     sample.bits.digit = seg_digits[digit];
     digit_tact = 0;
   }
   if (tick - prev_tick > TACT) {
-    if(sample.bits.leds > 63) sample.bits.leds = 0; 
+    if(sample.bits.leds >= 255) sample.bits.leds = 0; 
     else sample.bits.leds = (sample.bits.leds << 1) | 0x01;
-    SPI.beginTransaction(SPISettings(400000, LSBFIRST, SPI_MODE0));
+    sample.bits.digit = seg_digits[digit];
+    SPI.beginTransaction(SPISettings(40000, LSBFIRST, SPI_MODE0));
     SPI.transfer(sample.package);
     prev_tick = tick;
     dot_tact++;
