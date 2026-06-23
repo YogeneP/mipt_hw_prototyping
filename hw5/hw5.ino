@@ -1,46 +1,29 @@
-/*******************************************************
- * @file Basic.ino
- *
- * @brief Basic example demonstrating usage of the 7Semi DS18B20 library.
- *
- * This example initializes a DS18B20 digital temperature sensor using
- * the 1-wire protocol and reads the temperature in Celsius from the
- * first discovered device on the bus.
- *
- * Key features demonstrated:
- * - OneWire protocol setup
- * - Device search and temperature readout
- *
- * @note This example requires the 7Semi DS18B20 library to be installed.
- *
- * @section author Author
- * Written by 7Semi
- *
- * @section license License
- * @license MIT
- * Copyright (c) 2025 7Semi
- *******************************************************/
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
-#include <7semi_DS18B20.h>
+#define T_PIN 13
 
-DS18B20_7semi sensor(13);  // data pin 2
+OneWire ow(T_PIN);
+DallasTemperature sensors(&ow);
+DeviceAddress sensorAddr;
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
-  if (!sensor.begin()) {
-    Serial.println("No DS18B20 found!");
-    while (1)
-      ;
+  if (!ow.search(sensorAddr)) {
+    Serial.println("No oneWire device found!");
+    return; 
   }
-  uint8_t count = sensor.searchDevices();
-  Serial.print("Found devices: ");
-  Serial.println(count);
+  Serial.println("Starting...");
+  sensors.begin();
+  sensors.setResolution(sensorAddr, 12);
 }
 
-void loop() {
-  uint8_t addr[8];
-  if (sensor.getAddress(0, addr)) {
-    float t = sensor.readTemperature(addr);
+void loop()
+{ 
+  if (ow.search(sensorAddr)) {
+    sensors.requestTemperatures();
+    float t = sensors.getTempC(sensorAddr);
     Serial.print("Temp C: ");
     Serial.println(t);
   }
